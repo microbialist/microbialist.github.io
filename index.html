@@ -42,16 +42,28 @@
   }
 
   /* Header */
-  header { padding: 3rem 0 1.5rem; }
-  .site-title {
-    font-size: clamp(2.5rem, 8vw, 4rem);
-    line-height: 1.05;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 0 0 0.5rem;
+  header { padding: 0.25rem 0 0; }
+  .nav {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--line);
   }
+  .brand-h { margin: 0; display: flex; }
+  .brand {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 1rem 0;
+    font: 700 1.25rem/1 var(--font-body);
+    letter-spacing: -0.01em;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .brand:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
   .tagline {
-    margin: 0;
+    margin: 0 0 1rem;
     color: var(--muted);
     font-style: italic;
   }
@@ -59,9 +71,8 @@
   /* Tabs */
   .tabs {
     display: flex;
-    gap: 1.75rem;
-    border-bottom: 1px solid var(--line);
-    margin-top: 2rem;
+    align-items: stretch;
+    gap: 1.5rem;
   }
   .tab {
     appearance: none;
@@ -69,7 +80,7 @@
     border: 0;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
-    padding: 0.6rem 0;
+    padding: 1rem 0;
     font: 500 1rem/1 var(--font-ui);
     color: var(--muted);
     cursor: pointer;
@@ -158,13 +169,13 @@
   .article-body[hidden] { display: none; }
 
   /* Articles dropdown */
-  .tab-wrap { position: relative; }
+  .tab-wrap { position: relative; display: flex; }
   .caret { display: inline-block; margin-left: 0.3rem; font-size: 0.75em; transition: transform 0.15s ease; }
   .tab[aria-expanded="true"] .caret { transform: rotate(180deg); }
   .menu {
     position: absolute;
-    top: calc(100% + 0.6rem);
-    left: 0;
+    top: calc(100% + 0.4rem);
+    right: 0;
     z-index: 20;
     min-width: 18rem;
     max-width: calc(100vw - 2.5rem);
@@ -221,8 +232,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1 class="site-title">The Microbialist</h1>
-    <p class="tagline">By Noah Legall. Research, science, A.I., and biology, and where they meet.</p>
+    <nav class="nav" aria-label="Main">
+    <h1 class="brand-h"><button class="brand" type="button" data-go="home">The Microbialist</button></h1>
 
     <div class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="tab-home" aria-controls="panel-home" aria-selected="true" data-tab="home">Home</button>
@@ -231,11 +242,13 @@
         <ul class="menu" id="articles-menu" role="menu" aria-label="Article pages" hidden></ul>
       </div>
     </div>
+    </nav>
   </header>
 
   <main>
     <!-- Home / About -->
     <section class="panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home">
+      <p class="tagline">By Noah Legall. Research, science, A.I., and biology, and where they meet.</p>
       <p class="lede">Welcome to The Microbialist, a place to discuss advice on research, science, A.I., biology, and the intersection of them all.</p>
       <p>However you got here, thank you for reading. New posts are published on Substack, and you can subscribe there to get them by email.</p>
       <p><button class="btn" type="button" data-go="articles">Read the articles</button></p>
