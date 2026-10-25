@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Microbialist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Design tokens: change these to re-theme the whole page */
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --text: #000000;
+    --muted: #595959;
+    --line: #d9d9d9;
+    --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 0 1.25rem 5rem;
+  }
+
+  /* Header */
+  header { padding: 3rem 0 1.5rem; }
+  .site-title {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+  }
+  .tagline {
+    margin: 0;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 1.75rem;
+    border-bottom: 1px solid var(--line);
+    margin-top: 2rem;
+  }
+  .tab {
+    appearance: none;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 0.6rem 0;
+    font: 500 1rem/1 var(--font-ui);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+  .tab:focus-visible, .article-toggle:focus-visible, a:focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 4px;
+  }
+
+  /* Panels */
+  .panel { padding-top: 2.5rem; }
+  .panel[hidden] { display: none; }
+
+  h2 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0 0 1rem;
+  }
+  p { margin: 0 0 1.25rem; max-width: 36rem; }
+
+  .lede { font-size: 1.375rem; line-height: 1.5; }
+
+  .about-meta {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+  .about-meta a { color: var(--text); }
+
+  .btn {
+    display: inline-block;
+    font: 500 0.95rem/1 var(--font-ui);
+    color: var(--bg);
+    background: var(--text);
+    border: 1px solid var(--text);
+    padding: 0.8rem 1.25rem;
+    border-radius: 2px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--bg); color: var(--text); }
+
+  /* Articles */
+  .article-list { list-style: none; margin: 0; padding: 0; }
+  .article { border-bottom: 1px solid var(--line); }
+  .article:first-child { border-top: 1px solid var(--line); }
+
+  .article-toggle {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    padding: 1.5rem 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .article-date {
+    display: block;
+    font: 400 0.875rem/1 var(--font-ui);
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  .article-title {
+    display: block;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+  }
+  .article-toggle:hover .article-title { text-decoration: underline; text-underline-offset: 4px; }
+  .article-summary { display: block; color: var(--muted); max-width: 36rem; }
+
+  .article-body { padding: 0 0 1.5rem; }
+  .article-body[hidden] { display: none; }
+
+  footer {
+    margin-top: 4rem;
+    font: 400 0.875rem/1.5 var(--font-ui);
+    color: var(--muted);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tab { transition: color 0.15s ease, border-color 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="site-title">The Microbialist</h1>
+    <p class="tagline">By Noah Legall. Research, science, A.I., and biology, and where they meet.</p>
+
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-home" aria-controls="panel-home" aria-selected="true" data-tab="home">Home</button>
+      <button class="tab" role="tab" id="tab-articles" aria-controls="panel-articles" aria-selected="false" tabindex="-1" data-tab="articles">Articles</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Home / About -->
+    <section class="panel" id="panel-home" role="tabpanel" aria-labelledby="tab-home">
+      <p class="lede">Welcome to The Microbialist, a place to discuss advice on research, science, A.I., biology, and the intersection of them all.</p>
+      <p>However you got here, thank you for reading. New posts are published on Substack, and you can subscribe there to get them by email.</p>
+      <p><button class="btn" type="button" data-go="articles">Read the articles</button></p>
+
+      <div class="about-meta">
+        <h2>About</h2>
+        <p>Hi, I’m Noah Legall, the writer behind The Microbialist. The publication launched two years ago on Substack and is read by hundreds of subscribers. Follow along and join the conversation at <a href="https://themicrobialist.substack.com/" target="_blank" rel="noopener">themicrobialist.substack.com</a>.</p>
+      </div>
+    </section>
+
+    <!-- Articles -->
+    <section class="panel" id="panel-articles" role="tabpanel" aria-labelledby="tab-articles" hidden>
+      <ul class="article-list" id="article-list"></ul>
+
+      <div class="empty" id="articles-empty">
+        <p class="lede">Every article lives on Substack.</p>
+        <p>Read the full archive and subscribe to get new posts by email.</p>
+        <p><a class="btn" href="https://themicrobialist.substack.com/" target="_blank" rel="noopener">Open The Microbialist on Substack</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>© 2026 Noah Legall. The Microbialist is published on <a href="https://themicrobialist.substack.com/" target="_blank" rel="noopener">Substack</a>.</footer>
+</div>
+
+<script>
+  // ---- Content: edit this list to add your own articles ----
+  // Add posts here. Example:
+  // { id: "my-post", title: "Post title", date: "January 1, 2026",
+  //   summary: "One-line summary.", body: ["Paragraph one."],
+  //   url: "https://themicrobialist.substack.com/p/my-post" }
+  const articles = [];
+
+  // ---- Tabs ----
+  const tabs = Array.from(document.querySelectorAll(".tab"));
+  const panels = {
+    home: document.getElementById("panel-home"),
+    articles: document.getElementById("panel-articles")
+  };
+
+  function showTab(name, updateHash = true) {
+    if (!panels[name]) name = "home";
+    tabs.forEach(t => {
+      const active = t.dataset.tab === name;
+      t.setAttribute("aria-selected", active);
+      t.tabIndex = active ? 0 : -1;
+    });
+    Object.entries(panels).forEach(([key, el]) => { el.hidden = key !== name; });
+    if (updateHash) {
+      try { history.replaceState(null, "", "#" + name); } catch (e) {}
+    }
+  }
+
+  tabs.forEach((tab, i) => {
+    tab.addEventListener("click", () => showTab(tab.dataset.tab));
+    tab.addEventListener("keydown", e => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const next = tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
+      next.focus();
+      showTab(next.dataset.tab);
+    });
+  });
+
+  document.querySelectorAll("[data-go]").forEach(el => {
+    el.addEventListener("click", () => showTab(el.dataset.go));
+  });
+
+  // ---- Articles ----
+  const list = document.getElementById("article-list");
+
+  articles.forEach(a => {
+    const li = document.createElement("li");
+    li.className = "article";
+
+    const btn = document.createElement("button");
+    btn.className = "article-toggle";
+    btn.type = "button";
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-controls", "body-" + a.id);
+
+    const date = document.createElement("span");
+    date.className = "article-date";
+    date.textContent = a.date;
+
+    const title = document.createElement("span");
+    title.className = "article-title";
+    title.textContent = a.title;
+
+    const summary = document.createElement("span");
+    summary.className = "article-summary";
+    summary.textContent = a.summary;
+
+    btn.append(date, title, summary);
+
+    const body = document.createElement("div");
+    body.className = "article-body";
+    body.id = "body-" + a.id;
+    body.hidden = true;
+    a.body.forEach(text => {
+      const p = document.createElement("p");
+      p.textContent = text;
+      body.appendChild(p);
+    });
+    if (a.url) {
+      const p = document.createElement("p");
+      const link = document.createElement("a");
+      link.href = a.url;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = "Read the full post on Substack";
+      p.appendChild(link);
+      body.appendChild(p);
+    }
+
+    btn.addEventListener("click", () => {
+      const open = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", String(!open));
+      body.hidden = open;
+    });
+
+    li.append(btn, body);
+    list.appendChild(li);
+  });
+
+  if (articles.length) document.getElementById("articles-empty").hidden = true;
+
+  // ---- Initial state from URL hash (#home or #articles) ----
+  const initial = (location.hash || "").replace("#", "");
+  showTab(initial === "articles" ? "articles" : "home", false);
+</script>
+</body>
+</html>
