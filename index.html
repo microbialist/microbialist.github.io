@@ -157,6 +157,56 @@
   .article-body { padding: 0 0 1.5rem; }
   .article-body[hidden] { display: none; }
 
+  /* Articles dropdown */
+  .tab-wrap { position: relative; }
+  .caret { display: inline-block; margin-left: 0.3rem; font-size: 0.75em; transition: transform 0.15s ease; }
+  .tab[aria-expanded="true"] .caret { transform: rotate(180deg); }
+  .menu {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    left: 0;
+    z-index: 20;
+    min-width: 18rem;
+    max-width: calc(100vw - 2.5rem);
+    margin: 0;
+    padding: 0.4rem;
+    list-style: none;
+    background: var(--bg);
+    border: 1px solid var(--text);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  }
+  .menu[hidden] { display: none; }
+  .menu a {
+    display: block;
+    padding: 0.65rem 0.8rem;
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--font-ui);
+  }
+  .menu a:hover, .menu a:focus-visible { background: #f0f0f0; outline: none; }
+  .menu .m-title { display: block; font-weight: 600; font-size: 0.95rem; line-height: 1.3; }
+  .menu .m-tag { display: block; font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+
+  a.article-toggle { text-decoration: none; }
+  .empty { margin-top: 3rem; }
+
+  /* Article page viewer (wider than the text column) */
+  .page-view {
+    position: relative;
+    left: 50%;
+    width: min(68rem, calc(100vw - 3.5rem));
+    transform: translateX(-50%);
+  }
+  .back { font: 500 0.95rem/1 var(--font-ui); color: var(--text); }
+  .page-summary { color: var(--muted); }
+  .page-frame {
+    display: block;
+    width: 100%;
+    height: 760px;
+    border: 1px solid var(--line);
+    background: #fff;
+  }
+
   footer {
     margin-top: 4rem;
     font: 400 0.875rem/1.5 var(--font-ui);
@@ -176,7 +226,10 @@
 
     <div class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="tab-home" aria-controls="panel-home" aria-selected="true" data-tab="home">Home</button>
-      <button class="tab" role="tab" id="tab-articles" aria-controls="panel-articles" aria-selected="false" tabindex="-1" data-tab="articles">Articles</button>
+      <div class="tab-wrap">
+        <button class="tab" role="tab" id="tab-articles" aria-controls="panel-articles" aria-selected="false" aria-haspopup="menu" aria-expanded="false" tabindex="-1" data-tab="articles">Articles<span class="caret" aria-hidden="true">▾</span></button>
+        <ul class="menu" id="articles-menu" role="menu" aria-label="Article pages" hidden></ul>
+      </div>
     </div>
   </header>
 
@@ -195,18 +248,36 @@
 
     <!-- Articles -->
     <section class="panel" id="panel-articles" role="tabpanel" aria-labelledby="tab-articles" hidden>
+      <h2>Interactive articles</h2>
+      <ul class="article-list" id="page-index"></ul>
+
       <ul class="article-list" id="article-list"></ul>
 
       <div class="empty" id="articles-empty">
-        <p class="lede">Every article lives on Substack.</p>
+        <h2>More on Substack</h2>
         <p>Read the full archive and subscribe to get new posts by email.</p>
         <p><a class="btn" href="https://themicrobialist.substack.com/" target="_blank" rel="noopener">Open The Microbialist on Substack</a></p>
       </div>
+    </section>
+
+    <!-- Article page viewer -->
+    <section class="panel page-view" id="panel-page" role="tabpanel" aria-labelledby="tab-articles" hidden>
+      <p><a class="back" href="#articles" id="back-link">← All articles</a></p>
+      <h2 id="page-title"></h2>
+      <p class="page-summary" id="page-summary"></p>
+      <iframe class="page-frame" id="page-frame" title="" sandbox="allow-scripts"></iframe>
     </section>
   </main>
 
   <footer>© 2026 Noah Legall. The Microbialist is published on <a href="https://themicrobialist.substack.com/" target="_blank" rel="noopener">Substack</a>.</footer>
 </div>
+
+<!-- Article page sources. Each entry is a complete standalone HTML page.
+     To split into separate files later, copy each value out into its own .html file
+     and point the iframe at it with src instead of srcdoc. -->
+<script id="page-sources">
+window.PAGE_SOURCES = {"drag-reads": "\u003c!DOCTYPE html>\n\u003chtml lang=\"en\" data-theme=\"light\">\n\u003chead>\n\u003cmeta charset=\"utf-8\">\n\u003cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\u003ctitle>Drag reads onto the reference\u003c/title>\n\u003cscript src=\"https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js\">\u003c/script>\n\u003cstyle>\n  :root {\n    --bg: #fbfcfd;\n    --panel: #f0f4f7;\n    --ink: #1c2733;\n    --muted: #5f6f7d;\n    --line: #cfd8df;\n    --read: #dfe8ee;\n    --read-edge: #9db0bf;\n    --mismatch: #d6336c;\n    --accent: #0f7b8a;\n    --band: rgba(15, 123, 138, .11);\n    --cov: #7fb7c0;\n    --A: #1b8a5a; --C: #2b6cb0; --G: #b7791f; --T: #b83280;\n    color-scheme: light;\n  }\n  @media (prefers-color-scheme: dark) {\n    :root:not([data-theme=\"light\"]) {\n      --bg: #121a21; --panel: #1b2630; --ink: #e4ecf1; --muted: #93a4b2;\n      --line: #2f3d49; --read: #26343f; --read-edge: #4f6577;\n      --mismatch: #ff6b9a; --accent: #4cc3d3; --band: rgba(76, 195, 211, .14);\n      --cov: #2f7480;\n      --A: #52d49b; --C: #6fb0ff; --G: #f0b44c; --T: #f280c1;\n    }\n  }\n  * { box-sizing: border-box; }\n  html, body { margin: 0; }\n  body {\n    background: var(--bg); color: var(--ink);\n    font: 15px/1.5 system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif;\n    padding: 16px;\n  }\n  .widget { max-width: 1040px; margin: 0 auto; position: relative; }\n  h1 { font-size: 1.2rem; margin: 0 0 4px; font-weight: 650; }\n  .lede { margin: 0 0 14px; color: var(--muted); max-width: 72ch; }\n\n  .hintbox {\n    display: flex; align-items: flex-start; gap: 8px;\n    background: var(--panel); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;\n  }\n  .hintbox input { margin-top: 4px; accent-color: var(--accent); }\n  .hintbox label { font-size: .88rem; }\n  .hintbox small { color: var(--muted); display: block; font-size: .78rem; line-height: 1.3; }\n\n  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }\n  button {\n    font: inherit; font-size: .9rem; color: var(--ink);\n    background: var(--bg); border: 1px solid var(--line);\n    border-radius: 7px; padding: 6px 12px; cursor: pointer;\n  }\n  button:hover { border-color: var(--accent); }\n  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }\n  @media (prefers-color-scheme: dark) { :root:not([data-theme=\"light\"]) button.primary { color: #08242a; } }\n  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }\n\n  .stats { font-size: .9rem; margin: 6px 0 0; min-height: 1.5em; }\n  .live { font-size: .9rem; margin: 0 0 6px; min-height: 1.5em; color: var(--accent); font-weight: 600; }\n  .live.warn { color: var(--mismatch); }\n\n  .stage { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; padding: 6px 4px 2px; }\n  svg { display: block; width: 100%; min-width: 760px; height: auto; user-select: none; -webkit-user-select: none; }\n  svg text { font-family: ui-monospace, \"SF Mono\", Menlo, Consolas, monospace; }\n  g.read.dragging { filter: drop-shadow(0 5px 7px rgba(0, 0, 0, .28)); }\n\n  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .82rem; color: var(--muted); margin: 8px 0 0; }\n  .legend i { display: inline-block; width: 14px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }\n\n  #tip {\n    position: absolute; pointer-events: none; z-index: 5; max-width: 290px;\n    background: var(--ink); color: var(--bg);\n    font-size: .8rem; line-height: 1.4; padding: 7px 10px; border-radius: 7px;\n    opacity: 0; transition: opacity .1s;\n  }\n  #tip code { font-family: ui-monospace, Menlo, Consolas, monospace; }\n\u003c/style>\n\u003c/head>\n\u003cbody>\n\u003cdiv class=\"widget\">\n  \u003ch1>Drag reads onto the reference\u003c/h1>\n  \u003cp class=\"lede\">Each read starts in the tray. Drag one over the reference and it snaps into place under the columns it covers, showing matches and mismatches as you slide it along.\u003c/p>\n\n  \u003cdiv class=\"hintbox\">\n    \u003cinput id=\"hint\" type=\"checkbox\">\n    \u003clabel for=\"hint\">Hint: show every start position\n      \u003csmall>While dragging, a strip above the reference shows the mismatch count if the read started at each column.\u003c/small>\n    \u003c/label>\n  \u003c/div>\n\n  \u003cdiv class=\"actions\">\n    \u003cbutton id=\"regen\" class=\"primary\" type=\"button\">Simulate new reads\u003c/button>\n    \u003cbutton id=\"check\" type=\"button\">Check my placements\u003c/button>\n    \u003cbutton id=\"auto\" type=\"button\">Auto-map the rest\u003c/button>\n    \u003cbutton id=\"reset\" type=\"button\">Return all to tray\u003c/button>\n  \u003c/div>\n\n  \u003cdiv class=\"live\" id=\"live\" aria-hidden=\"true\">\u003c/div>\n  \u003cdiv class=\"stage\">\u003csvg id=\"chart\" role=\"img\" aria-label=\"Reference sequence with a lane for placing reads and a tray of unplaced reads\">\u003c/svg>\u003c/div>\n  \u003cdiv class=\"stats\" id=\"stats\" aria-live=\"polite\">\u003c/div>\n\n  \u003cdiv class=\"legend\">\n    \u003cspan>\u003ci style=\"background:var(--read);border:1px solid var(--read-edge)\">\u003c/i>Matching base\u003c/span>\n    \u003cspan>\u003ci style=\"background:var(--mismatch)\">\u003c/i>Mismatch\u003c/span>\n    \u003cspan>\u003ci style=\"background:var(--cov)\">\u003c/i>Coverage\u003c/span>\n  \u003c/div>\n\n  \u003cdiv id=\"tip\" role=\"tooltip\">\u003c/div>\n\u003c/div>\n\n\u003cscript>\n(() => {\n  // ---------- Constants and layout ----------\n  const REF_LEN = 60, READ_LEN = 14, N_READS = 16;\n  const CELL = 17, M = 20, W = M * 2 + REF_LEN * CELL;\n  const HEAT_TOP = 6, HEAT_H = 14, COV_TOP = 26, COV_H = 44, REF_Y = 88, REF_H = 24;\n  const LANE_TOP = 130, ROW_H = 24, LANE_ROWS = 8, LANE_BOTTOM = LANE_TOP + LANE_ROWS * ROW_H;\n  const TRAY_LABEL_Y = LANE_BOTTOM + 24, TRAY_TOP = TRAY_LABEL_Y + 12;\n  const TRAY_COLS = 4, SLOT_W = 252, TRAY_ROW_H = 30;\n  const H = TRAY_TOP + 4 * TRAY_ROW_H + 8;\n  const DOCK_ZONE = LANE_TOP + 72;       // dragging above this y docks the read under the reference\n\n  const reduce = window.matchMedia(\"(prefers-reduced-motion: reduce)\").matches;\n  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));\n\n  // ---------- Reference (random, with no repeated 9-mers) ----------\n  function lcg(seed) { return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }\n  function buildReference() {\n    const bases = \"ACGT\";\n    for (let seed = 11; ; seed++) {\n      const r = lcg(seed);\n      const s = Array.from({ length: REF_LEN }, () => bases[Math.floor(r() * 4)]).join(\"\");\n      const seen = new Set();\n      let dup = false;\n      for (let i = 0; i + 9 \u003c= REF_LEN; i++) {\n        const k = s.slice(i, i + 9);\n        if (seen.has(k)) { dup = true; break; }\n        seen.add(k);\n      }\n      if (!dup) return s;\n    }\n  }\n  const REF = buildReference();\n\n  const mmList = (seq, col) => {\n    const out = [];\n    for (let i = 0; i \u003c seq.length; i++) if (seq[i] !== REF[col + i]) out.push(i);\n    return out;\n  };\n\n  // ---------- State ----------\n  const state = { reads: [], hint: false, checked: false, dragging: false };\n  let nextId = 1;\n\n  // ---------- Read simulation (reads are exact substrings of the reference) ----------\n  function makeRead(seq, origin) {\n    const scores = [];\n    for (let c = 0; c + seq.length \u003c= REF_LEN; c++) scores.push(mmList(seq, c).length);\n    const bestMM = Math.min(...scores);\n    const bestPos = scores.map((s, c) => s === bestMM ? c : -1).filter(c => c >= 0);\n    return { id: nextId++, seq, origin, scores, bestMM, bestPos,\n             status: \"tray\", col: null, row: null, mm: [], x: 0, y: 0 };\n  }\n  function simulateReads() {\n    // Exact substrings of the reference, taken from distinct start positions.\n    const starts = d3.shuffle(d3.range(REF_LEN - READ_LEN + 1)).slice(0, N_READS);\n    return starts.map(s => makeRead(REF.slice(s, s + READ_LEN), s));\n  }\n\n  // ---------- SVG scaffold ----------\n  const svg = d3.select(\"#chart\").attr(\"viewBox\", `0 0 ${W} ${H}`);\n  const tip = d3.select(\"#tip\");\n  const widget = document.querySelector(\".widget\");\n\n  svg.append(\"rect\").attr(\"x\", M - 8).attr(\"y\", REF_Y + REF_H + 6)\n    .attr(\"width\", REF_LEN * CELL + 16).attr(\"height\", LANE_BOTTOM - (REF_Y + REF_H + 6) + 4)\n    .attr(\"rx\", 10).attr(\"fill\", \"var(--panel)\").attr(\"opacity\", .5)\n    .attr(\"stroke\", \"var(--line)\").attr(\"stroke-dasharray\", \"5 4\");\n\n  const bandRect = svg.append(\"rect\").attr(\"y\", REF_Y - 2).attr(\"height\", LANE_BOTTOM - REF_Y + 2)\n    .attr(\"rx\", 3).attr(\"fill\", \"var(--band)\").style(\"opacity\", 0).style(\"pointer-events\", \"none\");\n\n  const staticLayer = svg.append(\"g\");\n  const covLayer = svg.append(\"g\").style(\"pointer-events\", \"none\");\n  const heatLayer = svg.append(\"g\").style(\"pointer-events\", \"none\");\n  const ladderLayer = svg.append(\"g\").style(\"pointer-events\", \"none\");\n  const readLayer = svg.append(\"g\");\n\n  // Static content: reference, ruler, labels\n  staticLayer.selectAll(\"text.ref\").data(REF.split(\"\")).join(\"text\").attr(\"class\", \"ref\")\n    .attr(\"x\", (d, i) => M + i * CELL + CELL / 2).attr(\"y\", REF_Y + 17)\n    .attr(\"text-anchor\", \"middle\").attr(\"font-size\", 15).attr(\"font-weight\", 700)\n    .attr(\"fill\", d => `var(--${d})`).text(d => d);\n  const ticks = d3.range(0, REF_LEN, 10);\n  staticLayer.selectAll(\"line.tick\").data(ticks).join(\"line\").attr(\"class\", \"tick\")\n    .attr(\"x1\", d => M + d * CELL).attr(\"x2\", d => M + d * CELL)\n    .attr(\"y1\", REF_Y - 5).attr(\"y2\", REF_Y - 1).attr(\"stroke\", \"var(--muted)\");\n  staticLayer.selectAll(\"text.pos\").data(ticks).join(\"text\").attr(\"class\", \"pos\")\n    .attr(\"x\", d => M + d * CELL + 2).attr(\"y\", REF_Y - 8).attr(\"font-size\", 9)\n    .attr(\"fill\", \"var(--muted)\").text(d => d + 1);\n  staticLayer.append(\"text\").attr(\"x\", M).attr(\"y\", TRAY_LABEL_Y).attr(\"font-size\", 11)\n    .attr(\"fill\", \"var(--muted)\").text(\"Unplaced reads: drag one onto the reference\");\n  const emptyHint = staticLayer.append(\"text\").attr(\"x\", W / 2).attr(\"y\", LANE_TOP + 70)\n    .attr(\"text-anchor\", \"middle\").attr(\"font-size\", 13).attr(\"fill\", \"var(--muted)\")\n    .text(\"Drop reads here, under the columns they should cover\");\n\n  // ---------- Read elements ----------\n  const slotXY = i => ({ x: M + (i % TRAY_COLS) * SLOT_W, y: TRAY_TOP + Math.floor(i / TRAY_COLS) * TRAY_ROW_H });\n\n  function buildReads() {\n    readLayer.selectAll(\"*\").remove();\n    state.reads.forEach((d, i) => {\n      const s = slotXY(i);\n      d.x = s.x; d.y = s.y; d.slot = s;\n      const g = readLayer.append(\"g\").datum(d).attr(\"class\", \"read\")\n        .attr(\"transform\", `translate(${d.x},${d.y})`)\n        .style(\"cursor\", \"grab\").style(\"touch-action\", \"none\");\n      d.g = g;\n      const letters = d.seq.split(\"\");\n      g.selectAll(\"rect.base\").data(letters).join(\"rect\").attr(\"class\", \"base\")\n        .attr(\"x\", (b, k) => k * CELL).attr(\"width\", CELL - 1).attr(\"height\", 19).attr(\"rx\", 2);\n      g.selectAll(\"text.b\").data(letters).join(\"text\").attr(\"class\", \"b\")\n        .attr(\"x\", (b, k) => k * CELL + CELL / 2 - .5).attr(\"y\", 14)\n        .attr(\"text-anchor\", \"middle\").attr(\"font-size\", 13).style(\"pointer-events\", \"none\").text(b => b);\n      g.append(\"rect\").attr(\"class\", \"outline\").attr(\"width\", d.seq.length * CELL - 1).attr(\"height\", 19)\n        .attr(\"rx\", 3).attr(\"fill\", \"none\").style(\"pointer-events\", \"none\");\n      g.append(\"text\").attr(\"class\", \"tag\").attr(\"y\", 14).attr(\"font-size\", 12).attr(\"font-weight\", 700)\n        .style(\"pointer-events\", \"none\");\n\n      g.on(\"mouseenter mousemove\", (event) => hoverRead(event, d))\n       .on(\"mouseleave\", () => { tip.style(\"opacity\", 0); if (!state.dragging) bandRect.style(\"opacity\", 0); });\n\n      if (!reduce) g.attr(\"opacity\", 0).transition().delay(i * 45).duration(300).attr(\"opacity\", 1);\n    });\n    drag(readLayer.selectAll(\"g.read\"));\n  }\n\n  function moveTo(d, x, y, dur = 300, delay = 0) {\n    const ix = d3.interpolateNumber(d.x, x), iy = d3.interpolateNumber(d.y, y);\n    d.g.interrupt().transition().delay(delay).duration(reduce ? 0 : dur).ease(d3.easeCubicOut)\n      .attrTween(\"transform\", () => t => { d.x = ix(t); d.y = iy(t); return `translate(${d.x},${d.y})`; });\n  }\n\n  // ---------- Placement logic ----------\n  function freeRow(col, len, except) {\n    for (let r = 0; r \u003c LANE_ROWS; r++) {\n      const clash = state.reads.some(o => o !== except && o.status === \"placed\" && o.row === r &&\n        col \u003c o.col + o.seq.length + 1 && o.col \u003c col + len + 1);\n      if (!clash) return r;\n    }\n    return -1;\n  }\n  function place(d, col, row, dur = 220, delay = 0) {\n    d.status = \"placed\"; d.col = col; d.row = row; d.mm = mmList(d.seq, col);\n    moveTo(d, M + col * CELL, LANE_TOP + row * ROW_H, dur, delay);\n  }\n  function sendToTray(d, dur = 350, delay = 0) {\n    d.status = \"tray\"; d.col = null; d.row = null; d.mm = [];\n    moveTo(d, d.slot.x, d.slot.y, dur, delay);\n  }\n\n  // ---------- Verdicts (shown after “Check my placements”) ----------\n  const pos1 = c => c + 1;\n  function verdict(d) {\n    if (!d.bestPos.includes(d.col)) {\n      return { kind: \"worse\", glyph: \"?\", color: \"var(--G)\",\n               msg: `A better spot exists: ${mmText(d.bestMM)} at position ${d.bestPos.map(pos1).join(\" or \")}.` };\n    }\n    if (d.bestPos.length > 1) {\n      const others = d.bestPos.filter(c => c !== d.col).map(pos1).join(\", \");\n      return { kind: \"ambiguous\", glyph: \"≈\", color: \"var(--G)\",\n               msg: `Also fits equally well at ${others}, so a mapper could not tell these apart.` };\n    }\n    return { kind: \"best\", glyph: \"✓\", color: \"var(--accent)\", msg: \"Best placement.\" };\n  }\n  const mmText = n => n === 0 ? \"no mismatches\" : n === 1 ? \"1 mismatch\" : `${n} mismatches`;\n\n  // ---------- Painting ----------\n  function paintRead(d) {\n    const g = d.g, len = d.seq.length;\n    let col = null;\n    if (d.status === \"placed\") col = d.col;\n    else if (d.status === \"dragging\" && d.docked) col = d.dragCol;\n    const bad = col == null ? null : new Set(mmList(d.seq, col));\n\n    g.selectAll(\"rect.base\").attr(\"fill\", (b, i) => bad && bad.has(i) ? \"var(--mismatch)\" : \"var(--read)\");\n    g.selectAll(\"text.b\")\n      .attr(\"fill\", (b, i) => !bad ? `var(--${d.seq[i]})` : bad.has(i) ? \"#fff\" : \"var(--ink)\")\n      .attr(\"font-weight\", (b, i) => bad && bad.has(i) ? 800 : 600);\n    g.select(\"rect.outline\").attr(\"stroke\", \"var(--read-edge)\").attr(\"stroke-width\", 1);\n\n    let txt = \"\", color = \"var(--accent)\";\n    if (d.status === \"dragging\" && d.docked) {\n      const n = bad.size;\n      txt = n === 0 ? \"perfect match\" : mmText(n);\n      color = n === 0 ? \"var(--accent)\" : \"var(--mismatch)\";\n    } else if (d.status === \"placed\" && state.checked) {\n      const v = verdict(d); txt = v.glyph; color = v.color;\n    }\n    const need = Math.ceil((txt.length * 7.6 + 10) / CELL);\n    const left = col != null && (REF_LEN - (col + len)) \u003c need;\n    g.select(\"text.tag\").text(txt).attr(\"fill\", color)\n      .attr(\"x\", left ? -7 : len * CELL + 7).attr(\"text-anchor\", left ? \"end\" : \"start\");\n  }\n\n  function drawCoverage() {\n    const cov = new Array(REF_LEN).fill(0);\n    state.reads.filter(d => d.status === \"placed\").forEach(d => {\n      for (let i = 0; i \u003c d.seq.length; i++) cov[d.col + i]++;\n    });\n    const top = d3.max(cov);\n    const y = d3.scaleLinear().domain([0, Math.max(4, top)]).range([COV_H, 0]);\n    covLayer.selectAll(\"*\").remove();\n    covLayer.selectAll(\"rect\").data(cov).join(\"rect\")\n      .attr(\"x\", (v, i) => M + i * CELL).attr(\"width\", CELL - 1)\n      .attr(\"y\", v => COV_TOP + y(v)).attr(\"height\", v => COV_H - y(v))\n      .attr(\"fill\", \"var(--cov)\").attr(\"rx\", 1);\n    covLayer.append(\"text\").attr(\"x\", M).attr(\"y\", COV_TOP + 8).attr(\"font-size\", 10)\n      .attr(\"fill\", \"var(--muted)\").text(top ? `coverage (max ${top}×)` : \"coverage\");\n  }\n\n  function drawStats() {\n    const reads = state.reads;\n    const placed = reads.filter(d => d.status === \"placed\");\n    const tray = reads.filter(d => d.status === \"tray\");\n    let text = placed.length\n      ? `Placed ${placed.length} of ${reads.length} reads.`\n      : \"Nothing placed yet. Drag a read from the tray onto the reference.\";\n    if (state.checked) {\n      const c = { best: 0, ambiguous: 0, worse: 0 };\n      placed.forEach(d => c[verdict(d).kind]++);\n      const parts = [];\n      if (c.best) parts.push(`${c.best} in the best spot`);\n      if (c.ambiguous) parts.push(`${c.ambiguous} ambiguous (an equally good spot exists elsewhere)`);\n      if (c.worse) parts.push(`${c.worse} with a better spot available`);\n      text += \" Check: \" + (parts.join(\", \") || \"no placed reads yet\") + \".\";\n      if (tray.length) text += ` ${tray.length} still in the tray.`;\n      if (placed.length) text += \" Hover a placed read for details.\";\n    }\n    document.getElementById(\"stats\").textContent = text;\n    emptyHint.style(\"opacity\", placed.length || state.dragging ? 0 : 1);\n  }\n\n  function refresh() {\n    drawCoverage();\n    state.reads.forEach(paintRead);\n    drawStats();\n  }\n\n  // ---------- Overlays used while dragging ----------\n  function showBand(col, len) {\n    bandRect.attr(\"x\", M + col * CELL).attr(\"width\", len * CELL - 1).style(\"opacity\", 1);\n  }\n  function drawLadder(d, col) {\n    ladderLayer.selectAll(\"*\").remove();\n    const bad = new Set(mmList(d.seq, col));\n    const y1 = REF_Y + REF_H, y2 = LANE_TOP, ym = (y1 + y2) / 2;\n    d.seq.split(\"\").forEach((b, i) => {\n      const x = M + (col + i) * CELL + CELL / 2, miss = bad.has(i);\n      ladderLayer.append(\"line\").attr(\"x1\", x).attr(\"x2\", x).attr(\"y1\", y1).attr(\"y2\", y2)\n        .attr(\"stroke\", miss ? \"var(--mismatch)\" : \"var(--accent)\")\n        .attr(\"stroke-width\", miss ? 2 : 1).attr(\"opacity\", miss ? .9 : .45);\n      if (miss) {\n        ladderLayer.append(\"circle\").attr(\"cx\", x).attr(\"cy\", ym).attr(\"r\", 6).attr(\"fill\", \"var(--mismatch)\");\n        ladderLayer.append(\"path\").attr(\"d\", `M${x - 2.6},${ym - 2.6}L${x + 2.6},${ym + 2.6}M${x + 2.6},${ym - 2.6}L${x - 2.6},${ym + 2.6}`)\n          .attr(\"stroke\", \"#fff\").attr(\"stroke-width\", 1.6).attr(\"stroke-linecap\", \"round\");\n      } else {\n        ladderLayer.append(\"circle\").attr(\"cx\", x).attr(\"cy\", ym).attr(\"r\", 2.5).attr(\"fill\", \"var(--accent)\");\n      }\n    });\n  }\n  function drawHeat(d) {\n    heatLayer.selectAll(\"*\").remove();\n    if (!state.hint) return;\n    d.scores.forEach((n, c) => {\n      const x = M + c * CELL;\n      heatLayer.append(\"rect\").attr(\"x\", x).attr(\"y\", HEAT_TOP).attr(\"width\", CELL - 1).attr(\"height\", HEAT_H)\n        .attr(\"rx\", 2).attr(\"fill\", \"var(--accent)\").attr(\"opacity\", Math.max(.1, 1 - n / 7))\n        .attr(\"stroke\", n === d.bestMM ? \"var(--accent)\" : \"none\").attr(\"stroke-width\", 1.2);\n      heatLayer.append(\"text\").attr(\"x\", x + CELL / 2 - .5).attr(\"y\", HEAT_TOP + 11).attr(\"font-size\", 9)\n        .attr(\"text-anchor\", \"middle\").attr(\"fill\", \"var(--ink)\").text(n);\n    });\n    heatLayer.append(\"rect\").attr(\"class\", \"cur\").attr(\"y\", HEAT_TOP - 2).attr(\"width\", CELL + 1).attr(\"height\", HEAT_H + 4)\n      .attr(\"rx\", 3).attr(\"fill\", \"none\").attr(\"stroke\", \"var(--ink)\").attr(\"stroke-width\", 1.6).style(\"opacity\", 0);\n    heatLayer.append(\"text\").attr(\"x\", M + d.scores.length * CELL + 8).attr(\"y\", HEAT_TOP + 11).attr(\"font-size\", 10)\n      .attr(\"fill\", \"var(--muted)\").text(\"mismatches if the read starts here\");\n  }\n  function clearOverlays() {\n    ladderLayer.selectAll(\"*\").remove();\n    heatLayer.selectAll(\"*\").remove();\n    bandRect.style(\"opacity\", 0);\n  }\n\n  // ---------- Dragging ----------\n  const live = document.getElementById(\"live\");\n  function setLive(text, warn) { live.textContent = text; live.classList.toggle(\"warn\", !!warn); }\n\n  function beginDrag(d) {\n    d.g.interrupt();\n    d.status = \"dragging\"; d.docked = false;\n    d.g.classed(\"dragging\", true).style(\"cursor\", \"grabbing\");\n    state.dragging = true; state.checked = false;\n    tip.style(\"opacity\", 0);\n    drawHeat(d);\n    refresh();\n  }\n\n  function onDrag(event, d) {\n    if (!d.moved) { d.moved = true; beginDrag(d); }\n    const len = d.seq.length;\n    const col = clamp(Math.round((event.x - M) / CELL), 0, REF_LEN - len);\n    d.dragCol = col;\n    d.docked = event.y \u003c DOCK_ZONE;\n    if (d.docked) { d.x = M + col * CELL; d.y = LANE_TOP; }\n    else { d.x = event.x; d.y = event.y; }\n    d.g.attr(\"transform\", `translate(${d.x},${d.y})`);\n    paintRead(d);\n\n    const cur = heatLayer.select(\"rect.cur\");\n    if (d.docked) {\n      const n = mmList(d.seq, col).length;\n      drawLadder(d, col);\n      showBand(col, len);\n      if (!cur.empty()) cur.attr(\"x\", M + col * CELL - .5).style(\"opacity\", 1);\n      setLive(`Positions ${col + 1}–${col + len}: ${mmText(n)}, ${len - n} of ${len} bases match.`, n > 0);\n    } else {\n      ladderLayer.selectAll(\"*\").remove();\n      bandRect.style(\"opacity\", 0);\n      if (!cur.empty()) cur.style(\"opacity\", 0);\n      setLive(\"Move the read over the reference to compare it.\");\n    }\n  }\n\n  function onEnd(event, d) {\n    if (!d.moved) return;\n    d.moved = false;\n    clearOverlays();\n    state.dragging = false;\n    d.g.classed(\"dragging\", false).style(\"cursor\", \"grab\");\n    if (d.docked) {\n      const row = freeRow(d.dragCol, d.seq.length, d);\n      if (row >= 0) { place(d, d.dragCol, row); setLive(\"\"); }\n      else { sendToTray(d); setLive(\"No room at that position. Try a different spot.\", true); }\n    } else {\n      sendToTray(d); setLive(\"\");\n    }\n    d.docked = false;\n    refresh();\n  }\n\n  const drag = d3.drag().container(readLayer.node())\n    .on(\"start\", function (event, d) { d.moved = false; d3.select(this).raise(); })\n    .on(\"drag\", onDrag)\n    .on(\"end\", onEnd);\n\n  // ---------- Tooltip on placed reads ----------\n  function hoverRead(event, d) {\n    if (state.dragging || d.status !== \"placed\") return;\n    const len = d.seq.length, n = mmList(d.seq, d.col).length;\n    let html = `\u003ccode>${d.seq}\u003c/code>\u003cbr>Positions ${d.col + 1}–${d.col + len}, ${mmText(n)}`;\n    if (state.checked) {\n      html += `\u003cbr>${verdict(d).msg}\u003cbr>Taken from position ${d.origin + 1}.`;\n    }\n    tip.html(html).style(\"opacity\", 1);\n    const box = widget.getBoundingClientRect();\n    tip.style(\"left\", Math.min(event.clientX - box.left + 14, box.width - 300) + \"px\")\n       .style(\"top\", (event.clientY - box.top + 18) + \"px\");\n    showBand(d.col, len);\n  }\n\n  // ---------- Controls ----------\n  const $ = id => document.getElementById(id);\n  function newBatch() {\n    state.reads = simulateReads();\n    state.checked = false;\n    setLive(\"\");\n    buildReads();\n    refresh();\n  }\n\n  $(\"hint\").addEventListener(\"change\", e => { state.hint = e.target.checked; });\n  $(\"regen\").addEventListener(\"click\", newBatch);\n  $(\"check\").addEventListener(\"click\", () => { state.checked = true; refresh(); });\n  $(\"reset\").addEventListener(\"click\", () => {\n    state.checked = false;\n    state.reads.forEach((d, i) => { if (d.status !== \"tray\") sendToTray(d, 400, i * 30); });\n    setLive(\"\"); refresh();\n  });\n  $(\"auto\").addEventListener(\"click\", () => {\n    state.checked = false;\n    let k = 0;\n    state.reads.filter(d => d.status === \"tray\").forEach(d => {\n      const col = d.bestPos[0], row = freeRow(col, d.seq.length, d);\n      if (row \u003c 0) return;\n      place(d, col, row, 650, k++ * 140);\n    });\n    setLive(\"\"); refresh();\n  });\n\n  // ---------- Go ----------\n  newBatch();\n})();\n\u003c/script>\n\u003cscript>\n(function () {\n  function post() {\n    parent.postMessage({ reprHeight: Math.ceil(document.body.getBoundingClientRect().height) }, \"*\");\n  }\n  new ResizeObserver(post).observe(document.body);\n  window.addEventListener(\"load\", post);\n})();\n\u003c/script>\n\u003c/body>\n\u003c/html>"};
+</script>
 
 <script>
   // ---- Content: edit this list to add your own articles ----
@@ -216,28 +287,127 @@
   //   url: "https://themicrobialist.substack.com/p/my-post" }
   const articles = [];
 
+  // ---- Article pages (shown in the Articles dropdown and index) ----
+  const pages = [
+    {
+      id: "drag-reads",
+      title: "Drag reads onto the reference",
+      tag: "Interactive · D3",
+      summary: "Drag short sequencing reads onto a reference sequence and watch matches and mismatches appear as you slide each one into place."
+    }
+  ];
+
   // ---- Tabs ----
   const tabs = Array.from(document.querySelectorAll(".tab"));
   const panels = {
     home: document.getElementById("panel-home"),
-    articles: document.getElementById("panel-articles")
+    articles: document.getElementById("panel-articles"),
+    page: document.getElementById("panel-page")
   };
+  const articlesTab = document.getElementById("tab-articles");
+  const menu = document.getElementById("articles-menu");
 
-  function showTab(name, updateHash = true) {
-    if (!panels[name]) name = "home";
+  function setMenu(open) {
+    menu.hidden = !open;
+    articlesTab.setAttribute("aria-expanded", String(open));
+  }
+
+  function selectTab(name) {
     tabs.forEach(t => {
       const active = t.dataset.tab === name;
       t.setAttribute("aria-selected", active);
       t.tabIndex = active ? 0 : -1;
     });
-    Object.entries(panels).forEach(([key, el]) => { el.hidden = key !== name; });
-    if (updateHash) {
-      try { history.replaceState(null, "", "#" + name); } catch (e) {}
-    }
   }
 
+  function setHash(token) {
+    try { history.replaceState(null, "", "#" + token); } catch (e) {}
+  }
+
+  function showTab(name, updateHash = true) {
+    if (name !== "articles") name = "home";
+    selectTab(name);
+    Object.entries(panels).forEach(([key, el]) => { el.hidden = key !== name; });
+    setMenu(false);
+    if (updateHash) setHash(name);
+  }
+
+  // ---- Article page viewer ----
+  const frame = document.getElementById("page-frame");
+  let currentPage = null;
+
+  function openPage(id, updateHash = true) {
+    const page = pages.find(p => p.id === id);
+    const source = window.PAGE_SOURCES && window.PAGE_SOURCES[id];
+    if (!page || !source) { showTab("articles", updateHash); return; }
+
+    selectTab("articles");
+    Object.entries(panels).forEach(([key, el]) => { el.hidden = key !== "page"; });
+    setMenu(false);
+
+    document.getElementById("page-title").textContent = page.title;
+    document.getElementById("page-summary").textContent = page.summary;
+    frame.title = page.title;
+    if (currentPage !== id) {
+      frame.srcdoc = source;
+      currentPage = id;
+    }
+    if (updateHash) setHash(id);
+    window.scrollTo(0, 0);
+  }
+
+  // Embedded pages report their height so the frame fits without inner scrolling
+  window.addEventListener("message", e => {
+    if (e.source !== frame.contentWindow) return;
+    const h = e.data && e.data.reprHeight;
+    if (typeof h === "number" && isFinite(h)) {
+      frame.style.height = Math.min(Math.max(h, 300), 4000) + "px";
+    }
+  });
+
+  // Build dropdown menu and index from the same list
+  const index = document.getElementById("page-index");
+  pages.forEach(p => {
+    const li = document.createElement("li");
+    li.setAttribute("role", "none");
+    const a = document.createElement("a");
+    a.href = "#" + p.id;
+    a.setAttribute("role", "menuitem");
+    a.tabIndex = -1;
+    const t = document.createElement("span");
+    t.className = "m-title";
+    t.textContent = p.title;
+    const g = document.createElement("span");
+    g.className = "m-tag";
+    g.textContent = p.tag;
+    a.append(t, g);
+    a.addEventListener("click", e => { e.preventDefault(); openPage(p.id); });
+    li.appendChild(a);
+    menu.appendChild(li);
+
+    const row = document.createElement("li");
+    row.className = "article";
+    const link = document.createElement("a");
+    link.className = "article-toggle";
+    link.href = "#" + p.id;
+    const d = document.createElement("span");
+    d.className = "article-date";
+    d.textContent = p.tag;
+    const title = document.createElement("span");
+    title.className = "article-title";
+    title.textContent = p.title;
+    const sum = document.createElement("span");
+    sum.className = "article-summary";
+    sum.textContent = p.summary;
+    link.append(d, title, sum);
+    link.addEventListener("click", e => { e.preventDefault(); openPage(p.id); });
+    row.appendChild(link);
+    index.appendChild(row);
+  });
+
+  // ---- Tab and menu interactions ----
   tabs.forEach((tab, i) => {
-    tab.addEventListener("click", () => showTab(tab.dataset.tab));
+    if (tab !== articlesTab) tab.addEventListener("click", () => showTab(tab.dataset.tab));
     tab.addEventListener("keydown", e => {
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
       const next = tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
@@ -246,8 +416,47 @@
     });
   });
 
+  // Clicking Articles opens the Articles tab and toggles the dropdown
+  articlesTab.addEventListener("click", () => {
+    const wasOpen = !menu.hidden;
+    showTab("articles");
+    setMenu(!wasOpen);
+  });
+
+  const menuItems = () => Array.from(menu.querySelectorAll("a"));
+
+  articlesTab.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      showTab("articles");
+      setMenu(true);
+      const first = menuItems()[0];
+      if (first) first.focus();
+    }
+  });
+
+  menu.addEventListener("keydown", e => {
+    const items = menuItems();
+    const i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === "Home") { e.preventDefault(); items[0].focus(); }
+    else if (e.key === "End") { e.preventDefault(); items[items.length - 1].focus(); }
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !menu.hidden) { setMenu(false); articlesTab.focus(); }
+  });
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".tab-wrap")) setMenu(false);
+  });
+
   document.querySelectorAll("[data-go]").forEach(el => {
     el.addEventListener("click", () => showTab(el.dataset.go));
+  });
+  document.getElementById("back-link").addEventListener("click", e => {
+    e.preventDefault();
+    showTab("articles");
   });
 
   // ---- Articles ----
@@ -311,7 +520,8 @@
 
   // ---- Initial state from URL hash (#home or #articles) ----
   const initial = (location.hash || "").replace("#", "");
-  showTab(initial === "articles" ? "articles" : "home", false);
+  if (pages.some(p => p.id === initial)) openPage(initial, false);
+  else showTab(initial === "articles" ? "articles" : "home", false);
 </script>
 </body>
 </html>
