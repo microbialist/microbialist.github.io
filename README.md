@@ -1,2 +1,0 @@
-# microbialist.github.io
-blog
