@@ -5,12 +5,5 @@
     "summary": "Bioinformatic Pipelines Explained: an interactive look at how sequencing reads are mapped back onto a reference genome.",
     "tag": "Interactive · D3",
     "date": "2026-10-01"
-  },
-  {
-    "file": "drag-reads.html",
-    "title": "Drag reads onto the reference",
-    "summary": "Drag short sequencing reads onto a reference sequence and watch matches and mismatches appear as you slide each one into place.",
-    "tag": "Interactive · D3",
-    "date": "2026-09-01"
   }
 ]
