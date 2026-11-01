@@ -6,17 +6,20 @@
 <title>The Microbialist</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Georgia is a system font, so only the secondary font needs loading -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   /* Design tokens: change these to re-theme the whole page */
   :root {
     color-scheme: light;
-    --bg: #ffffff;
-    --text: #000000;
-    --muted: #595959;
-    --line: #d9d9d9;
-    --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
-    --font-ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --bg: #f6efdf;        /* creamy parchment: warm off-white that makes the blue pop */
+    --text: #000000;      /* black text */
+    --muted: #5c574c;     /* warm grey for secondary text, ~6.3:1 on the cream */
+    --line: #e0d8c1;      /* warm sand dividers */
+    --accent: #2a44ff;    /* royal blue for links, focus and active tab */
+    --tint: #ece4cf;      /* slightly deeper cream for hover states */
+    --font-body: Georgia, "Times New Roman", serif;
+    --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
@@ -35,11 +38,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  .wrap {
-    max-width: 42rem;
-    margin: 0 auto;
-    padding: 0 1.25rem 5rem;
-  }
+  .wrap { max-width: 42rem; margin: 0 auto; padding: 0 1.25rem 5rem; }
 
   /* Header */
   header { padding: 0.25rem 0 0; }
@@ -62,18 +61,10 @@
     cursor: pointer;
   }
   .brand:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
-  .tagline {
-    margin: 0 0 1rem;
-    color: var(--muted);
-    font-style: italic;
-  }
+  .tagline { margin: 0 0 1rem; color: var(--muted); font-style: italic; }
 
   /* Tabs */
-  .tabs {
-    display: flex;
-    align-items: stretch;
-    gap: 1.5rem;
-  }
+  .tabs { display: flex; align-items: stretch; gap: 1.5rem; }
   .tab {
     appearance: none;
     background: none;
@@ -81,17 +72,14 @@
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     padding: 1rem 0;
-    font: 500 1rem/1 var(--font-ui);
+    font: 500 0.95rem/1 var(--font-ui);
     color: var(--muted);
     cursor: pointer;
   }
   .tab:hover { color: var(--text); }
-  .tab[aria-selected="true"] {
-    color: var(--text);
-    border-bottom-color: var(--text);
-  }
+  .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
   .tab:focus-visible, .article-toggle:focus-visible, a:focus-visible {
-    outline: 2px solid var(--text);
+    outline: 2px solid var(--accent);
     outline-offset: 4px;
   }
 
@@ -99,29 +87,26 @@
   .panel { padding-top: 2.5rem; }
   .panel[hidden] { display: none; }
 
-  h2 {
-    font-size: 1.75rem;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
-    margin: 0 0 1rem;
-  }
+  h2 { font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em; margin: 0 0 1rem; }
   p { margin: 0 0 1.25rem; max-width: 36rem; }
-
   .lede { font-size: 1.375rem; line-height: 1.5; }
 
   .about-meta {
     margin-top: 2.5rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--line);
+  }
+  .about-meta .meta-note {
     font-family: var(--font-ui);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--muted);
   }
-  .about-meta a { color: var(--text); }
+  .about-meta a { color: var(--accent); text-underline-offset: 3px; }
 
   .btn {
     display: inline-block;
-    font: 500 0.95rem/1 var(--font-ui);
+    font: 500 0.9rem/1 var(--font-ui);
+    letter-spacing: 0.01em;
     color: var(--bg);
     background: var(--text);
     border: 1px solid var(--text);
@@ -136,7 +121,6 @@
   .article-list { list-style: none; margin: 0; padding: 0; }
   .article { border-bottom: 1px solid var(--line); }
   .article:first-child { border-top: 1px solid var(--line); }
-
   .article-toggle {
     display: block;
     width: 100%;
@@ -147,26 +131,26 @@
     color: inherit;
     font: inherit;
     cursor: pointer;
+    text-decoration: none;
   }
   .article-date {
     display: block;
-    font: 400 0.875rem/1 var(--font-ui);
+    font: 500 0.75rem/1 var(--font-ui);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.7rem;
   }
   .article-title {
     display: block;
     font-size: 1.5rem;
     line-height: 1.25;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.01em;
     margin-bottom: 0.4rem;
   }
-  .article-toggle:hover .article-title { text-decoration: underline; text-underline-offset: 4px; }
+  .article-toggle:hover .article-title { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
   .article-summary { display: block; color: var(--muted); max-width: 36rem; }
-
-  .article-body { padding: 0 0 1.5rem; }
-  .article-body[hidden] { display: none; }
 
   /* Articles dropdown */
   .tab-wrap { position: relative; display: flex; }
@@ -194,35 +178,12 @@
     text-decoration: none;
     font-family: var(--font-ui);
   }
-  .menu a:hover, .menu a:focus-visible { background: #f0f0f0; outline: none; }
+  .menu a:hover, .menu a:focus-visible { background: var(--tint); outline: none; }
   .menu .m-title { display: block; font-weight: 600; font-size: 0.95rem; line-height: 1.3; }
-  .menu .m-tag { display: block; font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
-
-  a.article-toggle { text-decoration: none; }
+  .menu .m-tag { display: block; font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
   .empty { margin-top: 3rem; }
 
-  /* Article page viewer (wider than the text column) */
-  .page-view {
-    position: relative;
-    left: 50%;
-    width: min(68rem, calc(100vw - 3.5rem));
-    transform: translateX(-50%);
-  }
-  .back { font: 500 0.95rem/1 var(--font-ui); color: var(--text); }
-  .page-summary { color: var(--muted); }
-  .page-frame {
-    display: block;
-    width: 100%;
-    height: 760px;
-    border: 1px solid var(--line);
-    background: #fff;
-  }
-
-  footer {
-    margin-top: 4rem;
-    font: 400 0.875rem/1.5 var(--font-ui);
-    color: var(--muted);
-  }
+  footer { margin-top: 4rem; font: 400 0.85rem/1.5 var(--font-ui); color: var(--muted); }
 
   @media (prefers-reduced-motion: no-preference) {
     .tab { transition: color 0.15s ease, border-color 0.15s ease; }
@@ -238,7 +199,7 @@
     <div class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="tab-home" aria-controls="panel-home" aria-selected="true" data-tab="home">Home</button>
       <div class="tab-wrap">
-        <button class="tab" role="tab" id="tab-articles" aria-controls="panel-articles" aria-selected="false" aria-haspopup="menu" aria-expanded="false" tabindex="-1" data-tab="articles">Articles<span class="caret" aria-hidden="true">▾</span></button>
+        <button class="tab" role="tab" id="tab-articles" aria-controls="panel-articles" aria-selected="false" aria-haspopup="menu" aria-expanded="false" data-tab="articles">Articles<span class="caret" aria-hidden="true">▾</span></button>
         <ul class="menu" id="articles-menu" role="menu" aria-label="Article pages" hidden></ul>
       </div>
     </div>
@@ -255,7 +216,8 @@
 
       <div class="about-meta">
         <h2>About</h2>
-        <p>Hi, I’m Noah Legall, the writer behind The Microbialist. The publication launched two years ago on Substack and is read by hundreds of subscribers. Follow along and join the conversation at <a href="https://themicrobialist.substack.com/" target="_blank" rel="noopener">themicrobialist.substack.com</a>.</p>
+        <p>Hi, I’m Noah Legall, the writer behind The Microbialist. The publication launched two years ago on Substack and is read by hundreds of subscribers.</p>
+        <p class="meta-note">Follow along and join the conversation at <a href="https://themicrobialist.substack.com/" target="_blank" rel="noopener">themicrobialist.substack.com</a>.</p>
       </div>
     </section>
 
@@ -385,8 +347,9 @@
     });
   });
 
-  // Clicking Articles opens the Articles tab and toggles the dropdown
-  articlesTab.addEventListener("click", () => {
+  // Clicking Articles only drops the list down; nothing opens until a link is clicked
+  articlesTab.addEventListener("click", e => {
+    e.stopPropagation();
     const wasOpen = !menu.hidden;
     showTab("articles");
     setMenu(!wasOpen);
