@@ -1,8 +1,8 @@
 [
   {
     "file": "read-mapping.html",
-    "title": "Read Mapping",
-    "summary": "Bioinformatic Pipelines Explained: an interactive look at how sequencing reads are mapped back onto a reference genome.",
+    "title": "Read Mapping Explained: An Interactive Guide to SNP Calling",
+    "summary": "Drag and drop sequencing reads onto a reference genome to see how read mapping works, how SNPs differ from sequencing errors, and why repeats and read length matter.",
     "tag": "Interactive · D3",
     "date": "2026-10-01"
   }
