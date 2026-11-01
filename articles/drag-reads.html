@@ -8,6 +8,7 @@
 <meta name="tag" content="Interactive · D3">
 <meta name="date" content="2026-09-01">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="../assets/nav.js" defer></script>
 <style>
   :root {
     --bg: #fbfcfd;
@@ -38,9 +39,9 @@
   body {
     background: var(--bg); color: var(--ink);
     font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    padding: 16px;
+    padding: 0 0 16px;
   }
-  .widget { max-width: 1040px; margin: 0 auto; position: relative; }
+  .widget { max-width: 1040px; margin: 0 auto; position: relative; padding: 0 16px; }
   h1 { font-size: 1.2rem; margin: 0 0 4px; font-weight: 650; }
   .lede { margin: 0 0 14px; color: var(--muted); max-width: 72ch; }
 
@@ -85,9 +86,8 @@
 </style>
 </head>
 <body>
-  <p style="margin:0 auto 12px;max-width:1040px;font-size:.9rem"><a href="../#articles" style="color:var(--accent)">← All articles</a></p>
 <div class="widget">
-  <h1>Drag reads onto the reference</h1>
+  <h1 style="margin-top:1.25rem">Drag reads onto the reference</h1>
   <p class="lede">Each read starts in the tray. Drag one over the reference and it snaps into place under the columns it covers, showing matches and mismatches as you slide it along.</p>
 
   <div class="hintbox">
