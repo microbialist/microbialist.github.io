@@ -4,15 +4,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Read Mapping | The Microbialist</title>
+  <title>Read Mapping Explained: An Interactive Guide to SNP Calling | The Microbialist</title>
   <meta name="description"
-    content="Bioinformatic Pipelines Explained: an interactive look at how sequencing reads are mapped back onto a reference genome.">
+    content="Drag and drop sequencing reads onto a reference genome to see how read mapping works, how SNPs differ from sequencing errors, and why repeats and read length matter.">
+  <meta name="author" content="Noah Legall">
+  <meta name="theme-color" content="#f6efdf">
   <meta name="tag" content="Interactive · D3">
   <meta name="date" content="2026-10-01">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
     rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script src="../assets/nav.js" defer></script>
@@ -282,6 +284,38 @@
       }
     }
   </style>
+  <link rel="canonical" href="https://microbialist.github.io/articles/read-mapping.html">
+  <meta property="og:url" content="https://microbialist.github.io/articles/read-mapping.html">
+
+  <!-- TODO: once you have a 1200x630 preview image, uncomment these and add "image" to the JSON-LD below.
+  <meta property="og:image" content="https://microbialist.github.io/assets/read-mapping-og.png">
+  <meta name="twitter:image" content="https://microbialist.github.io/assets/read-mapping-og.png">
+  -->
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="The Microbialist">
+  <meta property="og:title" content="Read Mapping Explained: An Interactive Guide to SNP Calling">
+  <meta property="og:description"
+    content="Drag and drop sequencing reads onto a reference genome to see how read mapping works.">
+  <meta property="article:published_time" content="2026-10-01">
+  <meta property="article:author" content="Noah Legall">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Read Mapping Explained: An Interactive Guide to SNP Calling">
+  <meta name="twitter:description"
+    content="Drag and drop sequencing reads onto a reference genome to see how read mapping works.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Read Mapping: Bioinformatic Pipelines Explained",
+    "description": "An interactive look at how sequencing reads are mapped back onto a reference genome, and how SNPs are told apart from sequencing errors.",
+    "author": { "@type": "Person", "name": "Noah Legall" },
+    "datePublished": "2026-10-01",
+    "publisher": { "@type": "Organization", "name": "The Microbialist" },
+    "mainEntityOfPage": "https://microbialist.github.io/articles/read-mapping.html"
+  }
+  </script>
 </head>
 
 <body>
@@ -292,6 +326,8 @@
         <h1>Read Mapping</h1>
         <p class="tagline">Bioinformatic Pipelines Explained</p>
         <div class="byline">By Noah Legall</div>
+
+      <noscript><p><em>The interactive read-mapping demos in this article need JavaScript. The explanations below still read on their own.</em></p></noscript>
 
         <p>The fundamental activity of bioinformatics - the most routine of analyses one can do as a bioinformatician -
           is SNP calling. For the uninitiated, SNP calling is the process of taking raw sequencing data from multiple
