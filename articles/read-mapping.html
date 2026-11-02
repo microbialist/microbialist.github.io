@@ -272,6 +272,22 @@
       margin-right: 5px;
     }
 
+    /* Subscribe call-to-action */
+    .follow {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line);
+    }
+    .follow h2 { margin-top: 0; }
+    .follow iframe {
+      display: block;
+      width: 100%;
+      max-width: 480px;
+      height: 320px;
+      border: 1px solid #EEE;
+      background: white;
+    }
+
     footer {
       margin-top: 4rem;
       font: 400 0.85rem/1.5 var(--font-ui);
@@ -323,7 +339,7 @@
     <main>
       <article>
         <span class="kicker">Interactive · D3</span>
-        <h1>Read Mapping: An Interactive Guide to SNP Calling</h1>
+        <h1>Read Mapping</h1>
         <p class="tagline">Bioinformatic Pipelines Explained</p>
         <div class="byline">By Noah Legall</div>
 
@@ -2220,6 +2236,14 @@
           <p><em>Continuously dividing,</em></p>
           <p><em>NL</em></p>
         </div>
+
+        <section class="follow" aria-labelledby="follow-heading">
+          <h2 id="follow-heading">Follow along</h2>
+          <p>If you enjoyed this, subscribe to The Microbialist for more interactive bioinformatics explainers, including
+            the follow-ups on BWA, BLAST, and De Bruijn graphs, plus updates on new posts and projects.</p>
+          <iframe src="https://themicrobialist.substack.com/embed" title="Subscribe to The Microbialist" width="480"
+            height="320" frameborder="0" scrolling="no"></iframe>
+        </section>
       </article>
     </main>
 
