@@ -272,6 +272,37 @@
       margin-right: 5px;
     }
 
+    /* Custom-sequence tool: form controls */
+    .rm-form { margin-bottom: 14px; }
+    .rm-form .field-label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .rm-form textarea {
+      display: block;
+      width: 100%;
+      font: 600 15px/1.4 "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text);
+      background: var(--read);
+      border: 1px solid var(--read-edge);
+      border-radius: 2px;
+      padding: .7rem .8rem;
+      resize: vertical;
+    }
+    .rm-form textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .rm-form textarea[aria-invalid="true"] { border-color: var(--mismatch); }
+    .rm-form .msg-row { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0 12px; font-size: .85rem; color: var(--muted); }
+    .rm-form .msg.error { color: var(--mismatch); font-weight: 600; }
+    .rm-form .count { white-space: nowrap; }
+    .rm-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 12px 24px; margin-bottom: 14px; }
+    .rm-controls label { display: block; font-size: .85rem; }
+    .rm-controls .row { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 2px; }
+    .rm-controls input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .rm-widget .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .rm-widget button.secondary { background: transparent; color: var(--text); }
+    .rm-widget button.secondary:hover { background: var(--tint); }
+    .rm-widget .status { font-size: .85rem; color: var(--muted); margin: 0 0 8px; max-width: none; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
     /* Subscribe call-to-action */
     .follow {
       margin-top: 3rem;
@@ -2236,6 +2267,463 @@
           <p><em>Continuously dividing,</em></p>
           <p><em>NL</em></p>
         </div>
+
+        <h2>Try it with your own sequence</h2>
+
+        <p><strong>How to use this tool:</strong> type or paste a reference sequence of 20 to 50 bases (only A, C, G and
+          T are accepted), or upload a plain-text or FASTA file. Then choose a read length, a sequencing error rate and
+          a number of SNPs, and press <em>Generate reads</em>. The tool builds a sample genome by introducing that many
+          SNPs into your reference, shreds it into reads, and sprinkles in random errors. Drag reads from the tray onto
+          the reference, or use <em>Auto-map</em>, and look at the pattern: SNPs show up as the same mismatch across
+          every overlapping read (the purple columns), while errors are scattered one-offs. Try short reads on a
+          repetitive sequence to see ambiguous placement, or raise the error rate to see how noise builds up. Your
+          sequence stays in your browser and is never uploaded anywhere.</p>
+
+        <div class="rm-widget">
+          <form class="rm-form" id="cm-form" novalidate>
+            <label class="field-label" for="cm-seq">Reference sequence (A, C, G, T; 20 to 50 bases)</label>
+            <textarea id="cm-seq" rows="2" spellcheck="false" autocomplete="off" autocapitalize="characters"
+              aria-describedby="cm-msg cm-count" aria-invalid="false"></textarea>
+            <div class="msg-row">
+              <span class="msg" id="cm-msg" role="status" aria-live="polite"></span>
+              <span class="count" id="cm-count">0 / 50 bases</span>
+            </div>
+
+            <div class="rm-controls">
+              <div>
+                <label for="cm-len"><span class="row"><span>Read length</span><output id="cm-len-o" for="cm-len"></output></span></label>
+                <input type="range" id="cm-len" min="6" max="30" step="1" value="14">
+              </div>
+              <div>
+                <label for="cm-err"><span class="row"><span>Sequencing error rate</span><output id="cm-err-o" for="cm-err"></output></span></label>
+                <input type="range" id="cm-err" min="0" max="15" step="1" value="3">
+              </div>
+              <div>
+                <label for="cm-snp"><span class="row"><span>Number of SNPs</span><output id="cm-snp-o" for="cm-snp"></output></span></label>
+                <input type="range" id="cm-snp" min="0" max="5" step="1" value="2">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button type="submit">Generate reads</button>
+              <button type="button" class="secondary" id="cm-example">Use example sequence</button>
+              <button type="button" class="secondary" id="cm-upload">Upload file</button>
+              <button type="button" class="secondary" id="auto-custom_read_map">Auto-map unplaced reads</button>
+              <input type="file" id="cm-file" class="visually-hidden" accept=".txt,.fa,.fasta,.fna,text/plain" tabindex="-1"
+                aria-label="Upload a sequence file">
+            </div>
+          </form>
+
+          <p class="status" id="cm-status" role="status" aria-live="polite"></p>
+          <div class="stage"><svg id="chart-custom_read_map" role="img"
+              aria-label="Your reference sequence with a lane for placing reads and a tray of unplaced reads"></svg></div>
+
+          <div class="legend">
+            <span><i style="background:var(--read);border:1px solid var(--read-edge)"></i>Matching base</span>
+            <span><i style="background:var(--mismatch)"></i>Mismatch (a sequencing error, or a SNP when it falls in a
+              highlighted column)</span>
+            <span><i style="background:var(--snp)"></i>SNP (reference base; reads covering it carry a different
+              base)</span>
+          </div>
+        </div>
+        <script>
+          (() => {
+            // ---------- Limits and layout ----------
+            const MIN_SEQ = 20, MAX_SEQ = 50, MIN_READ = 6, MAX_READ = 30, MAX_SNP = 5, MAX_READS = 16;
+            const CELL = 17, M = 20, W = M * 2 + MAX_SEQ * CELL;
+            const REF_Y = 40, REF_H = 24;
+            const LANE_TOP = REF_Y + 42, ROW_H = 24, LANE_ROWS = 10, LANE_BOTTOM = LANE_TOP + LANE_ROWS * ROW_H;
+            const TRAY_LABEL_Y = LANE_BOTTOM + 24, TRAY_TOP = TRAY_LABEL_Y + 12, TRAY_ROW_H = 30;
+            const DOCK_ZONE = LANE_TOP + 72;       // dragging above this y docks the read under the reference
+            const EXAMPLE = "ATGGCGTACCTGAATCGGATTCAGCTAGGCTTACGATCCA";
+
+            const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+            const $ = id => document.getElementById(id);
+
+            const seqIn = $("cm-seq"), msg = $("cm-msg"), count = $("cm-count"), status = $("cm-status");
+            const lenIn = $("cm-len"), errIn = $("cm-err"), snpIn = $("cm-snp");
+            const lenOut = $("cm-len-o"), errOut = $("cm-err-o"), snpOut = $("cm-snp-o");
+
+            // ---------- Current simulation ----------
+            let REF = "", REF_LEN = 0, READ_LEN = 14, snpCols = [];
+            const state = { reads: [], dragging: false };
+            let autoMap = () => { };
+
+            // ---------- Input validation ----------
+            // Accepts pasted text with line breaks, spaces, and an optional FASTA ">" header line.
+            function parse(raw) {
+              const clean = raw.split(/\r?\n/).filter(l => !l.trim().startsWith(">")).join("")
+                .replace(/\s+/g, "").toUpperCase();
+              const out = { clean };
+              if (!clean) return Object.assign(out, { empty: true, error: "Enter a sequence of 20 to 50 bases using A, C, G and T." });
+              const bad = [...new Set(clean.replace(/[ACGT]/g, "").split(""))];
+              if (bad.length) {
+                const shown = bad.slice(0, 6).map(c => `"${c}"`).join(", ") + (bad.length > 6 ? ", …" : "");
+                const hint = bad.includes("U") ? " (this tool takes DNA, so write T instead of U)" : "";
+                return Object.assign(out, { error: `Only A, C, G and T are allowed. Found ${shown}${hint}.` });
+              }
+              if (clean.length > MAX_SEQ) return Object.assign(out, { error: `That is ${clean.length} bases; the maximum is ${MAX_SEQ}.` });
+              if (clean.length < MIN_SEQ) return Object.assign(out, { error: `That is ${clean.length} bases; enter at least ${MIN_SEQ}.` });
+              out.seq = clean;
+              return out;
+            }
+
+            function showMsg(text, isError) {
+              msg.textContent = text;
+              msg.classList.toggle("error", !!isError);
+              seqIn.setAttribute("aria-invalid", isError ? "true" : "false");
+            }
+
+            function updateOutputs() {
+              lenOut.textContent = lenIn.value + " bases";
+              errOut.textContent = errIn.value + "%";
+              snpOut.textContent = snpIn.value;
+            }
+            function syncControls(L) {
+              lenIn.max = Math.min(MAX_READ, L);
+              if (+lenIn.value > +lenIn.max) lenIn.value = lenIn.max;
+              const maxSnp = Math.min(MAX_SNP, Math.floor(L / 4));
+              snpIn.max = maxSnp;
+              if (+snpIn.value > maxSnp) snpIn.value = maxSnp;
+              updateOutputs();
+            }
+
+            function checkInput() {
+              const r = parse(seqIn.value);
+              count.textContent = `${r.clean.length} / ${MAX_SEQ} bases`;
+              if (r.error) showMsg(r.error, !r.empty);
+              else { showMsg(`Valid sequence: ${r.seq.length} bases.`, false); syncControls(r.seq.length); }
+              if (r.empty) msg.textContent = r.error;
+              return r;
+            }
+
+            // ---------- Simulation ----------
+            function pickSnps(n) {
+              const picked = [];
+              for (const c of d3.shuffle(d3.range(REF_LEN))) {
+                if (picked.length >= n) break;
+                if (picked.every(p => Math.abs(p - c) >= 3)) picked.push(c);   // keep SNP labels from crowding
+              }
+              return picked.sort((a, b) => a - b);
+            }
+
+            function generate() {
+              const r = parse(seqIn.value);
+              count.textContent = `${r.clean.length} / ${MAX_SEQ} bases`;
+              if (r.error) { showMsg(r.error, true); seqIn.focus(); return; }
+
+              REF = r.seq; REF_LEN = REF.length; seqIn.value = REF;
+              syncControls(REF_LEN);
+              showMsg(`Valid sequence: ${REF_LEN} bases.`, false);
+              READ_LEN = +lenIn.value;
+              const errRate = +errIn.value / 100, nSnp = +snpIn.value;
+
+              // Sample genome = reference with SNPs swapped in
+              snpCols = pickSnps(nSnp);
+              const genome = REF.split("");
+              snpCols.forEach(c => {
+                const others = "ACGT".split("").filter(b => b !== REF[c]);
+                genome[c] = others[Math.floor(Math.random() * others.length)];
+              });
+
+              // Read starts: two reads over every SNP, then random starts for the rest
+              const maxStart = REF_LEN - READ_LEN;
+              const chosen = [];
+              snpCols.forEach(c => {
+                const cand = d3.range(Math.max(0, c - READ_LEN + 1), Math.min(c, maxStart) + 1);
+                d3.shuffle(cand).slice(0, 2).forEach(s => chosen.push(s));
+              });
+              const nReads = Math.min(MAX_READS, Math.max(chosen.length, clamp(Math.round(REF_LEN * 4 / READ_LEN), 8, MAX_READS)));
+              while (chosen.length < nReads) chosen.push(Math.floor(Math.random() * (maxStart + 1)));
+
+              state.reads = d3.shuffle(chosen).map(start => {
+                const chars = genome.slice(start, start + READ_LEN);
+                for (let i = 0; i < chars.length; i++) {
+                  if (Math.random() < errRate) {
+                    const others = "ACGT".split("").filter(b => b !== chars[i]);
+                    chars[i] = others[Math.floor(Math.random() * others.length)];
+                  }
+                }
+                return { seq: chars.join(""), origin: start, status: "tray", col: null, row: null, x: 0, y: 0 };
+              });
+
+              render();
+              status.textContent = `Generated ${nReads} reads of ${READ_LEN} bases from your ${REF_LEN}-base sequence ` +
+                `(${nSnp} SNP${nSnp === 1 ? "" : "s"}, ${errIn.value}% error rate). Purple columns mark where the sample differs from the reference.`;
+            }
+
+            // ---------- Matching helpers ----------
+            const mmList = (seq, col) => {
+              const out = [];
+              for (let i = 0; i < seq.length; i++) if (seq[i] !== REF[col + i]) out.push(i);
+              return out;
+            };
+            const mmText = n => n === 0 ? "no mismatches" : n === 1 ? "1 mismatch" : `${n} mismatches`;
+            function bestPositions(seq) {
+              const scores = [];
+              for (let c = 0; c + seq.length <= REF_LEN; c++) scores.push(mmList(seq, c).length);
+              const best = Math.min(...scores);
+              return scores.map((s, c) => s === best ? c : -1).filter(c => c >= 0);
+            }
+
+            // ---------- Drawing ----------
+            function render() {
+              const svg = d3.select("#chart-custom_read_map");
+              svg.selectAll("*").remove();
+
+              const SLOT_W = READ_LEN * CELL + 28;
+              const TRAY_COLS = Math.max(1, Math.floor((W - M * 2) / SLOT_W));
+              const trayRows = Math.ceil(state.reads.length / TRAY_COLS);
+              const H = TRAY_TOP + trayRows * TRAY_ROW_H + 8;
+              svg.attr("viewBox", `0 0 ${W} ${H}`);
+              state.dragging = false;
+
+              svg.append("rect").attr("x", M - 8).attr("y", REF_Y + REF_H + 6)
+                .attr("width", REF_LEN * CELL + 16).attr("height", LANE_BOTTOM - (REF_Y + REF_H + 6) + 4)
+                .attr("rx", 10).attr("fill", "var(--panel)").attr("opacity", .5)
+                .attr("stroke", "var(--line)").attr("stroke-dasharray", "5 4");
+
+              const bandRect = svg.append("rect").attr("y", REF_Y - 2).attr("height", LANE_BOTTOM - REF_Y + 2)
+                .attr("rx", 3).attr("fill", "var(--band)").style("opacity", 0).style("pointer-events", "none");
+
+              const staticLayer = svg.append("g");
+              const ladderLayer = svg.append("g").style("pointer-events", "none");
+              const readLayer = svg.append("g");
+
+              // SNP columns: faint guide down the lane, then the highlighted reference base
+              snpCols.forEach(c => {
+                staticLayer.append("rect").attr("x", M + c * CELL).attr("y", REF_Y + REF_H + 6)
+                  .attr("width", CELL - 1).attr("height", LANE_BOTTOM - (REF_Y + REF_H + 6))
+                  .attr("fill", "var(--snp)").attr("opacity", .13).style("pointer-events", "none");
+                staticLayer.append("rect").attr("x", M + c * CELL - 1).attr("y", REF_Y - 1)
+                  .attr("width", CELL + 1).attr("height", REF_H + 2).attr("rx", 3).attr("fill", "var(--snp)");
+                staticLayer.append("text").attr("x", M + c * CELL + CELL / 2 - .5).attr("y", REF_Y - 6)
+                  .attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", 700)
+                  .attr("fill", "var(--snp)").text("SNP");
+              });
+
+              // Reference letters, ruler, labels
+              staticLayer.selectAll("text.ref").data(REF.split("")).join("text").attr("class", "ref")
+                .attr("x", (d, i) => M + i * CELL + CELL / 2).attr("y", REF_Y + 17)
+                .attr("text-anchor", "middle").attr("font-size", 15).attr("font-weight", 700)
+                .attr("fill", (d, i) => snpCols.includes(i) ? "var(--snp-ink)" : `var(--${d})`).text(d => d);
+              const ticks = d3.range(0, REF_LEN, 10);
+              staticLayer.selectAll("line.tick").data(ticks).join("line").attr("class", "tick")
+                .attr("x1", d => M + d * CELL).attr("x2", d => M + d * CELL)
+                .attr("y1", REF_Y - 5).attr("y2", REF_Y - 1).attr("stroke", "var(--muted)");
+              staticLayer.selectAll("text.pos").data(ticks.filter(t => !snpCols.some(c => Math.abs(c - t) < 2))).join("text").attr("class", "pos")
+                .attr("x", d => M + d * CELL + 2).attr("y", REF_Y - 8).attr("font-size", 9)
+                .attr("fill", "var(--muted)").text(d => d + 1);
+              staticLayer.append("text").attr("x", M).attr("y", TRAY_LABEL_Y).attr("font-size", 11)
+                .attr("fill", "var(--muted)").text("Unplaced reads: drag one onto the reference");
+              const emptyHint = staticLayer.append("text").attr("x", W / 2).attr("y", LANE_TOP + 70)
+                .attr("text-anchor", "middle").attr("font-size", 13).attr("fill", "var(--muted)")
+                .text("Drop reads here, under the columns they should cover");
+
+              // ---------- Read elements ----------
+              const slotXY = i => ({ x: M + (i % TRAY_COLS) * SLOT_W, y: TRAY_TOP + Math.floor(i / TRAY_COLS) * TRAY_ROW_H });
+
+              function moveTo(d, x, y, dur = 300, delay = 0) {
+                const ix = d3.interpolateNumber(d.x, x), iy = d3.interpolateNumber(d.y, y);
+                d.g.interrupt().transition().delay(delay).duration(reduce ? 0 : dur).ease(d3.easeCubicOut)
+                  .attrTween("transform", () => t => { d.x = ix(t); d.y = iy(t); return `translate(${d.x},${d.y})`; });
+              }
+
+              // ---------- Placement logic ----------
+              function freeRow(col, len, except) {
+                for (let r = 0; r < LANE_ROWS; r++) {
+                  const clash = state.reads.some(o => o !== except && o.status === "placed" && o.row === r &&
+                    col < o.col + o.seq.length + 1 && o.col < col + len + 1);
+                  if (!clash) return r;
+                }
+                return -1;
+              }
+              function place(d, col, row, dur = 220, delay = 0) {
+                d.status = "placed"; d.col = col; d.row = row;
+                moveTo(d, M + col * CELL, LANE_TOP + row * ROW_H, dur, delay);
+              }
+              function sendToTray(d, dur = 350, delay = 0) {
+                d.status = "tray"; d.col = null; d.row = null;
+                moveTo(d, d.slot.x, d.slot.y, dur, delay);
+              }
+
+              // ---------- Painting ----------
+              function paintRead(d) {
+                const g = d.g, len = d.seq.length;
+                let col = null;
+                if (d.status === "placed") col = d.col;
+                else if (d.status === "dragging" && d.docked) col = d.dragCol;
+                const bad = col == null ? null : new Set(mmList(d.seq, col));
+
+                g.selectAll("rect.base").attr("fill", (b, i) => bad && bad.has(i) ? "var(--mismatch)" : "var(--read)");
+                g.selectAll("text.b")
+                  .attr("fill", (b, i) => !bad ? `var(--${d.seq[i]})` : bad.has(i) ? "#fff" : "var(--ink)")
+                  .attr("font-weight", (b, i) => bad && bad.has(i) ? 800 : 600);
+                g.select("rect.outline").attr("stroke", "var(--read-edge)").attr("stroke-width", 1);
+
+                let txt = "", color = "var(--accent)";
+                if (d.status === "dragging" && d.docked) {
+                  const n = bad.size;
+                  txt = n === 0 ? "perfect match" : mmText(n);
+                  color = n === 0 ? "var(--accent)" : "var(--mismatch)";
+                }
+                const need = Math.ceil((txt.length * 7.6 + 10) / CELL);
+                const left = col != null && (REF_LEN - (col + len)) < need;
+                g.select("text.tag").text(txt).attr("fill", color)
+                  .attr("x", left ? -7 : len * CELL + 7).attr("text-anchor", left ? "end" : "start");
+              }
+
+              function refresh() {
+                state.reads.forEach(paintRead);
+                const placed = state.reads.some(d => d.status === "placed");
+                emptyHint.style("opacity", placed || state.dragging ? 0 : 1);
+              }
+
+              // ---------- Overlays used while dragging ----------
+              function showBand(col, len) {
+                bandRect.attr("x", M + col * CELL).attr("width", len * CELL - 1).style("opacity", 1);
+              }
+              function drawLadder(d, col) {
+                ladderLayer.selectAll("*").remove();
+                const bad = new Set(mmList(d.seq, col));
+                const y1 = REF_Y + REF_H, y2 = LANE_TOP, ym = (y1 + y2) / 2;
+                d.seq.split("").forEach((b, i) => {
+                  const x = M + (col + i) * CELL + CELL / 2, miss = bad.has(i);
+                  ladderLayer.append("line").attr("x1", x).attr("x2", x).attr("y1", y1).attr("y2", y2)
+                    .attr("stroke", miss ? "var(--mismatch)" : "var(--accent)")
+                    .attr("stroke-width", miss ? 2 : 1).attr("opacity", miss ? .9 : .45);
+                  if (miss) {
+                    ladderLayer.append("circle").attr("cx", x).attr("cy", ym).attr("r", 6).attr("fill", "var(--mismatch)");
+                    ladderLayer.append("path").attr("d", `M${x - 2.6},${ym - 2.6}L${x + 2.6},${ym + 2.6}M${x + 2.6},${ym - 2.6}L${x - 2.6},${ym + 2.6}`)
+                      .attr("stroke", "#fff").attr("stroke-width", 1.6).attr("stroke-linecap", "round");
+                  } else {
+                    ladderLayer.append("circle").attr("cx", x).attr("cy", ym).attr("r", 2.5).attr("fill", "var(--accent)");
+                  }
+                });
+              }
+              function clearOverlays() {
+                ladderLayer.selectAll("*").remove();
+                bandRect.style("opacity", 0);
+              }
+
+              // ---------- Dragging ----------
+              function beginDrag(d) {
+                d.g.interrupt();
+                d.status = "dragging"; d.docked = false;
+                d.g.classed("dragging", true).style("cursor", "grabbing");
+                state.dragging = true;
+                refresh();
+              }
+
+              function onDrag(event, d) {
+                if (!d.moved) { d.moved = true; beginDrag(d); }
+                const len = d.seq.length;
+                const col = clamp(Math.round((event.x - M) / CELL), 0, REF_LEN - len);
+                d.dragCol = col;
+                d.docked = event.y < DOCK_ZONE;
+                if (d.docked) { d.x = M + col * CELL; d.y = LANE_TOP; }
+                else { d.x = event.x; d.y = event.y; }
+                d.g.attr("transform", `translate(${d.x},${d.y})`);
+                paintRead(d);
+
+                if (d.docked) {
+                  drawLadder(d, col);
+                  showBand(col, len);
+                } else {
+                  clearOverlays();
+                }
+              }
+
+              function onEnd(event, d) {
+                if (!d.moved) return;
+                d.moved = false;
+                clearOverlays();
+                state.dragging = false;
+                d.g.classed("dragging", false).style("cursor", "grab");
+                if (d.docked) {
+                  const row = freeRow(d.dragCol, d.seq.length, d);
+                  if (row >= 0) place(d, d.dragCol, row);
+                  else sendToTray(d);
+                } else {
+                  sendToTray(d);
+                }
+                d.docked = false;
+                refresh();
+              }
+
+              const drag = d3.drag().container(readLayer.node())
+                .on("start", function (event, d) { d.moved = false; d3.select(this).raise(); })
+                .on("drag", onDrag)
+                .on("end", onEnd);
+
+              // ---------- Build the reads ----------
+              state.reads.forEach((d, i) => {
+                const s = slotXY(i);
+                d.x = s.x; d.y = s.y; d.slot = s;
+                const g = readLayer.append("g").datum(d).attr("class", "read")
+                  .attr("transform", `translate(${d.x},${d.y})`)
+                  .style("cursor", "grab").style("touch-action", "none");
+                d.g = g;
+                const letters = d.seq.split("");
+                g.selectAll("rect.base").data(letters).join("rect").attr("class", "base")
+                  .attr("x", (b, k) => k * CELL).attr("width", CELL - 1).attr("height", 19).attr("rx", 2);
+                g.selectAll("text.b").data(letters).join("text").attr("class", "b")
+                  .attr("x", (b, k) => k * CELL + CELL / 2 - .5).attr("y", 14)
+                  .attr("text-anchor", "middle").attr("font-size", 13).style("pointer-events", "none").text(b => b);
+                g.append("rect").attr("class", "outline").attr("width", d.seq.length * CELL - 1).attr("height", 19)
+                  .attr("rx", 3).attr("fill", "none").style("pointer-events", "none");
+                g.append("text").attr("class", "tag").attr("y", 14).attr("font-size", 12).attr("font-weight", 700)
+                  .style("pointer-events", "none");
+
+                if (!reduce) g.attr("opacity", 0).transition().delay(i * 45).duration(300).attr("opacity", 1);
+              });
+              drag(readLayer.selectAll("g.read"));
+
+              // ---------- Auto-map: put every unplaced read at its best-fitting column ----------
+              autoMap = () => {
+                let k = 0;
+                state.reads.filter(d => d.status === "tray").forEach(d => {
+                  const col = bestPositions(d.seq)[0], row = freeRow(col, d.seq.length, d);
+                  if (row < 0) return;
+                  place(d, col, row, 650, k++ * 140);
+                });
+                refresh();
+              };
+
+              refresh();
+            }
+
+            // ---------- Events ----------
+            seqIn.addEventListener("input", checkInput);
+            $("cm-form").addEventListener("submit", e => { e.preventDefault(); generate(); });
+            [lenIn, errIn, snpIn].forEach(el => {
+              el.addEventListener("input", updateOutputs);
+              el.addEventListener("change", generate);
+            });
+            $("cm-example").addEventListener("click", () => { seqIn.value = EXAMPLE; generate(); });
+            $("auto-custom_read_map").addEventListener("click", () => autoMap());
+
+            // File upload: small text/FASTA files only; contents go through the same validation
+            const fileIn = $("cm-file");
+            $("cm-upload").addEventListener("click", () => fileIn.click());
+            fileIn.addEventListener("change", () => {
+              const f = fileIn.files[0];
+              fileIn.value = "";
+              if (!f) return;
+              if (f.size > 10000) { showMsg("That file is too large. Upload a file with a single sequence of at most 50 bases.", true); return; }
+              const reader = new FileReader();
+              reader.onload = () => { seqIn.value = String(reader.result); generate(); };
+              reader.onerror = () => showMsg("Could not read that file.", true);
+              reader.readAsText(f);
+            });
+
+            // ---------- Go ----------
+            seqIn.value = EXAMPLE;
+            updateOutputs();
+            generate();
+          })();
+        </script>
 
         <section class="follow" aria-labelledby="follow-heading">
           <h2 id="follow-heading">Follow along</h2>
