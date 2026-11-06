@@ -343,16 +343,14 @@
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
       const next = tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
       next.focus();
-      showTab(next.dataset.tab);
+      if (next !== articlesTab) showTab(next.dataset.tab);
     });
   });
 
   // Clicking Articles only drops the list down; nothing opens until a link is clicked
   articlesTab.addEventListener("click", e => {
     e.stopPropagation();
-    const wasOpen = !menu.hidden;
-    showTab("articles");
-    setMenu(!wasOpen);
+    setMenu(menu.hidden);
   });
 
   const menuItems = () => Array.from(menu.querySelectorAll("a"));
@@ -360,7 +358,6 @@
   articlesTab.addEventListener("keydown", e => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      showTab("articles");
       setMenu(true);
       const first = menuItems()[0];
       if (first) first.focus();
